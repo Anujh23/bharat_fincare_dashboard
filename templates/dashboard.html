@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bharat Fincare — Executive Board</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="board-head">
+    <div class="seg" id="seg">
+      <button data-pair="eli_nbl" class="on">ELI vs NBL</button>
+      <button data-pair="lr_cp">LR vs CP</button>
+    </div>
+    <div class="head-right">
+      <button id="refresh" class="refresh" title="Refresh now">&#x21bb;</button>
+    </div>
+  </header>
+
+  <div id="loader" class="loader" hidden><div class="spinner"></div><span id="loadmsg">Loading board…</span></div>
+  <div id="errbar" class="errbar" hidden></div>
+
+  <main class="board" id="board" hidden>
+    <section class="card logo" style="grid-area:logo">
+      <div class="logo-text"><span class="lo-o">Bha<span class="rup">&#8377;</span>at</span><span class="lo-g">Fincare</span><sup class="tm">&trade;</sup></div>
+    </section>
+
+    <section class="card total" style="grid-area:total" id="cTotal"></section>
+
+    <section class="card prog" style="grid-area:eli" id="pA"></section>
+    <section class="card prog" style="grid-area:nbl" id="pB"></section>
+
+    <section class="card lead" style="grid-area:lead1" id="leadA"></section>
+    <section class="card lead" style="grid-area:lead2" id="leadB"></section>
+
+    <section class="card chartcard" style="grid-area:chart">
+      <h3 class="chart-title">Daily Performance: <span id="chartTitle"></span></h3>
+      <div class="chart-box"><canvas id="chart"></canvas></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='chart.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

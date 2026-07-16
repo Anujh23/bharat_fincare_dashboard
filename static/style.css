@@ -1,0 +1,132 @@
+/* ============ Bharat Fincare — neumorphic executive board (single screen) ============ */
+:root{
+  --bg:#e9edf3;
+  --ink:#4a5268;
+  --head:#2b3350;
+  --muted:#9aa2b5;
+  --lite:#ffffff;      /* neumorphic highlight */
+  --dark:#c4cbd9;      /* neumorphic shadow    */
+  --good:#22a06b;
+  --radius:22px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%; margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  padding:14px 18px; overflow:hidden;
+  display:flex; flex-direction:column;
+  font:14px/1.4 "Segoe UI",Inter,system-ui,-apple-system,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- neumorphic primitives ---------- */
+.card{
+  background:var(--bg); border-radius:var(--radius); padding:16px 18px;
+  min-height:0; overflow:hidden;
+  box-shadow:8px 8px 18px var(--dark), -8px -8px 18px var(--lite);
+}
+.track{
+  height:13px; border-radius:99px; background:var(--bg); overflow:hidden;
+  box-shadow:inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--lite);
+}
+.track>i{display:block; height:100%; border-radius:99px; transition:width .6s cubic-bezier(.2,.7,.2,1)}
+
+/* ---------- header ---------- */
+.board-head{flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+.seg{display:inline-flex; gap:4px; padding:5px; border-radius:99px; background:var(--bg);
+  box-shadow:inset 3px 3px 7px var(--dark), inset -3px -3px 7px var(--lite)}
+.seg button{border:0; background:transparent; padding:8px 18px; border-radius:99px;
+  color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; transition:.2s}
+.seg button.on{color:var(--head); background:var(--bg);
+  box-shadow:4px 4px 9px var(--dark), -4px -4px 9px var(--lite)}
+.head-right{display:flex; align-items:center; gap:12px}
+.stamp{color:var(--muted); font-size:12px}
+.countdown{color:var(--head); font-size:12px; font-weight:700; padding:7px 14px; border-radius:99px;
+  background:var(--bg); box-shadow:inset 2px 2px 5px var(--dark), inset -2px -2px 5px var(--lite)}
+.refresh{width:40px; height:40px; border:0; border-radius:50%; cursor:pointer; font-size:17px;
+  color:var(--ink); background:var(--bg); box-shadow:5px 5px 11px var(--dark), -5px -5px 11px var(--lite)}
+.refresh:active{box-shadow:inset 3px 3px 7px var(--dark), inset -3px -3px 7px var(--lite)}
+
+/* ---------- board grid: fills the remaining viewport ---------- */
+.board{
+  flex:1 1 auto; min-height:0;
+  display:grid; gap:16px;
+  grid-template-columns:0.9fr 1.4fr 1.4fr 1.25fr;
+  grid-template-rows:1fr 1fr 2fr;
+  grid-template-areas:
+    "logo  eli   nbl   lead1"
+    "total eli   nbl   lead1"
+    "chart chart chart lead2";
+}
+
+/* ---------- logo ---------- */
+.logo{display:grid; place-items:center}
+.logo-text{font-size:27px; font-weight:800; letter-spacing:-.5px; font-family:Georgia,"Times New Roman",serif; position:relative}
+.lo-o,.lo-o .rup{color:#f0701f}
+.lo-g{color:#3aa856}
+.tm{font-size:11px; color:var(--muted); font-family:system-ui}
+
+/* ---------- section labels ---------- */
+.lbl{font-size:12px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--muted)}
+
+/* ---------- progress cards ---------- */
+.prog{display:flex; flex-direction:column}
+.prog .lbl{color:var(--pc)}
+.prog .big{font-size:clamp(38px,5.2vh,56px); font-weight:800; line-height:1; margin:10px 0 14px; color:var(--pc); letter-spacing:-2px}
+.prog .sub{margin-top:12px; color:var(--ink); font-size:13px}
+.prog .sub b{color:var(--head)}
+.prog .loans{margin-top:auto; padding-top:10px; text-align:right; color:var(--good); font-weight:700; font-size:14px}
+
+/* ---------- company total ---------- */
+.total{display:flex; flex-direction:column; justify-content:center}
+.total .big2{font-size:14px; margin-top:12px; color:var(--ink)}
+.total .big2 b{color:var(--head); font-weight:800}
+
+/* ---------- leaders ---------- */
+.lead{display:flex; flex-direction:column}
+.lead-head{display:flex; align-items:center; gap:12px; margin-bottom:12px}
+.lead-head h3{margin:0; font-size:17px; color:var(--head); font-weight:800}
+.lead-head .rule{flex:1; height:3px; border-radius:99px; background:linear-gradient(90deg,var(--pc),transparent)}
+.topbranch{margin-top:16px; border-radius:16px; padding:12px; text-align:center; background:var(--bg);
+  box-shadow:inset 4px 4px 9px var(--dark), inset -4px -4px 9px var(--lite); border-left:5px solid var(--pc)}
+.topbranch .tb-lbl{font-size:10px; font-weight:800; letter-spacing:1px; color:var(--muted); text-transform:uppercase}
+.topbranch .tb-name{font-size:19px; font-weight:800; color:var(--head); margin:5px 0 3px}
+.topbranch .tb-amt{font-size:22px; font-weight:800; color:var(--pc); letter-spacing:-.5px}
+.cm-list{list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:18px}
+.cm-list li{display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center}
+.cm-list .rnk{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:50%;
+  color:#fff; font-size:13px; font-weight:800; flex:0 0 auto;
+  box-shadow:2px 2px 5px var(--dark), -2px -2px 5px var(--lite)}
+.cm-list .rnk.g1{background:linear-gradient(135deg,#ffdf6b,#e2a100)}   /* gold   */
+.cm-list .rnk.g2{background:linear-gradient(135deg,#dbe2ec,#96a3b4)}   /* silver */
+.cm-list .rnk.g3{background:linear-gradient(135deg,#e3ac74,#a9621f)}   /* bronze */
+.cm-name{color:var(--head); font-weight:600; font-size:15px; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cm-amt{color:#12a6c2; font-weight:800; font-size:15px; text-align:right; white-space:nowrap}
+.upd{margin-top:auto; padding-top:10px; text-align:right; color:var(--muted); font-size:11px; font-style:italic}
+
+/* ---------- chart ---------- */
+.chartcard{display:flex; flex-direction:column}
+.chart-title{margin:0 0 10px; font-size:16px; color:var(--head); font-weight:800}
+.chart-box{position:relative; flex:1 1 auto; min-height:0}
+
+/* ---------- loader / errors ---------- */
+.loader{display:flex; align-items:center; gap:12px; color:var(--muted); padding:30px 4px}
+.spinner{width:22px; height:22px; border:3px solid var(--dark); border-top-color:#4a90e2;
+  border-radius:50%; animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.errbar{flex:0 0 auto; background:#fdecec; color:#c0392b; padding:10px 14px; border-radius:12px; margin-bottom:12px; font-size:13px}
+
+/* ---------- fallback: allow scrolling only on very small screens ---------- */
+@media (max-width:1000px), (max-height:620px){
+  body{overflow:auto}
+  .board{grid-template-columns:1fr 1fr;
+    grid-template-rows:none;
+    grid-template-areas:"logo total" "eli nbl" "lead1 lead2" "chart chart";}
+  .chart-box{min-height:280px}
+}
+@media(max-width:640px){
+  .board{grid-template-columns:1fr;
+    grid-template-areas:"logo" "total" "eli" "nbl" "lead1" "lead2" "chart";}
+}
