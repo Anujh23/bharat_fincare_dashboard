@@ -89,6 +89,15 @@ PRODUCTS = [
 
 TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", "30"))
 
+# ELI / NBL sit behind a WAF that 403s the default "python-requests" User-Agent.
+# A normal browser UA is required; harmless for CP/LR.
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0 Safari/537.36"
+    ),
+}
+
 # ---------------------------------------------------------------- helpers
 def num(v):
     """Coerce numbers-as-strings ('155000.00'), None, '' -> float."""
@@ -207,9 +216,9 @@ def fetch_endpoint(product, key, from_date, to_date):
     body = {"fromDate": from_date, "toDate": to_date}
     try:
         if product["type"] == "json":
-            resp = requests.post(url, json=body, timeout=TIMEOUT, verify=CA_BUNDLE)
+            resp = requests.post(url, json=body, timeout=TIMEOUT, verify=CA_BUNDLE, headers=HEADERS)
         else:
-            resp = requests.post(url, data=body, timeout=TIMEOUT, verify=CA_BUNDLE)
+            resp = requests.post(url, data=body, timeout=TIMEOUT, verify=CA_BUNDLE, headers=HEADERS)
         resp.raise_for_status()
         payload = resp.json()
         rows = [NORMALIZERS[key](r) for r in records_of(payload)]
