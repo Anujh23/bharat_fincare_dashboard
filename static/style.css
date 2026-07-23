@@ -47,6 +47,7 @@ body{
 .refresh{width:40px; height:40px; border:0; border-radius:50%; cursor:pointer; font-size:17px;
   color:var(--ink); background:var(--bg); box-shadow:5px 5px 11px var(--dark), -5px -5px 11px var(--lite)}
 .refresh:active{box-shadow:inset 3px 3px 7px var(--dark), inset -3px -3px 7px var(--lite)}
+.refresh.spinning{animation:spin .8s linear infinite; color:#4a90e2}
 
 /* ---------- board grid: fills the remaining viewport ---------- */
 .board{

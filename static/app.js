@@ -18,23 +18,55 @@ const inrC = (n)=>{ n=Number(n)||0; const a=Math.abs(n);
 const inrF = (n)=> "₹"+Math.round(Number(n)||0).toLocaleString("en-IN");
 const hexA = (hex,a)=>{ const n=parseInt(hex.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; };
 
+/* ---------- cache (stale-while-revalidate) ---------- */
+const CACHE_PREFIX = "bfc_board_";       // one entry per pair
+let shownPair = null;                    // which pair's data is currently on the board
+function cacheGet(pair){ try{ const s=localStorage.getItem(CACHE_PREFIX+pair); return s?JSON.parse(s):null; }catch{ return null; } }
+function cacheSet(pair,d){ try{ localStorage.setItem(CACHE_PREFIX+pair, JSON.stringify(d)); }catch{} }
+
+function showEndpointErrs(d){
+  const errs=[]; d.products.forEach(p=>Object.keys(p.errors||{}).forEach(k=>errs.push(`${p.key}/${k}`)));
+  if(errs.length){ $("#errbar").hidden=false; $("#errbar").textContent=`⚠ ${errs.length} endpoint(s) failed: ${errs.join(", ")}`; }
+  else{ $("#errbar").hidden=true; }
+}
+
+function paint(d, pair){
+  render(d); showEndpointErrs(d);
+  $("#board").hidden=false; $("#loader").hidden=true; shownPair=pair;
+}
+
 /* ---------- fetch ---------- */
 async function load(){
   if(refreshTimer){ clearTimeout(refreshTimer); refreshTimer = null; }   // no double-trigger mid-load
-  $("#loader").hidden=false; $("#board").hidden=true; $("#errbar").hidden=true;
-  $("#loadmsg").textContent=`Loading ${STATE.pair.replace("_"," vs ").toUpperCase()} — fetching daily data…`;
+  const pair = STATE.pair;
+
+  // Keep the board visible during refresh. Only blank to the loader when we have
+  // nothing at all to show for this pair (first load, or a pair with no cache yet).
+  if(shownPair !== pair){
+    const cached = cacheGet(pair);
+    if(cached){ paint(cached, pair); }        // instant stale data — no blank flash
+    else{
+      $("#board").hidden=true; $("#loader").hidden=false; $("#errbar").hidden=true;
+      $("#loadmsg").textContent=`Loading ${pair.replace("_"," vs ").toUpperCase()} — fetching daily data…`;
+    }
+  }
+  $("#refresh").classList.add("spinning");
+
   try{
-    const r = await fetch(`/api/board?pair=${STATE.pair}`);
+    const r = await fetch(`/api/board?pair=${pair}`);
     const d = await r.json();
     if(!r.ok) throw new Error(d.error||"Request failed");
-    render(d);
-    $("#board").hidden=false;
-    const errs=[]; d.products.forEach(p=>Object.keys(p.errors||{}).forEach(k=>errs.push(`${p.key}/${k}`)));
-    if(errs.length){ $("#errbar").hidden=false; $("#errbar").textContent=`⚠ ${errs.length} endpoint(s) failed: ${errs.join(", ")}`; }
+    cacheSet(pair, d);
+    paint(d, pair);                            // swap in fresh data only on success
   }catch(err){
-    $("#errbar").hidden=false; $("#errbar").textContent="Error: "+err.message;
+    // Refresh failed — keep the last good data on screen, just flag it.
+    $("#errbar").hidden=false;
+    $("#errbar").textContent = (shownPair===pair)
+      ? "⚠ Refresh failed — showing last loaded data. "+err.message
+      : "Error: "+err.message;
   }finally{
     $("#loader").hidden=true;
+    $("#refresh").classList.remove("spinning");
     refreshTimer = setTimeout(load, REFRESH_MS);   // silent auto-refresh every 5 min
   }
 }
