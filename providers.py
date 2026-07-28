@@ -323,14 +323,18 @@ def daily_total(pkey, day_iso):
 def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
     prod = PRODUCT_MAP[pkey]
     _, bt, bt_err = fetch_endpoint(prod, "branch_target", ms_iso, to_iso)
+    _, st, st_err = fetch_endpoint(prod, "sanction_target", ms_iso, to_iso)
     _, sc, sc_err = fetch_endpoint(prod, "sanction", ms_iso, to_iso)
     _, cm, cm_err = fetch_endpoint(prod, "collection", ms_iso, to_iso)
     bt = bt or []
+    st = st or []
     sc = sc or []
     cm = cm or []
 
-    target = sum(r["target"] for r in bt)
-    achievement = sum(r["achievement"] for r in bt)
+    # Target & achievement come from sanctionTargetVsAchievementApi (officer roll-up).
+    # branch_target is kept only for the per-branch leaderboard below.
+    target = sum(r["target"] for r in st)
+    achievement = sum(r["achievement"] for r in st)
     loans = int(sum(r["total_cases"] for r in sc))
     remaining = max(target - achievement, 0)
 
@@ -362,7 +366,7 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
         "top_branches": top_branches,
         "top_cms": top_cms,
         "daily": daily_series,
-        "errors": {k: v for k, v in (("branch_target", bt_err), ("sanction", sc_err), ("collection", cm_err)) if v},
+        "errors": {k: v for k, v in (("sanction_target", st_err), ("branch_target", bt_err), ("sanction", sc_err), ("collection", cm_err)) if v},
     }
 
 
