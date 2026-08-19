@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 import calendar
 import glob
+import json
 import os
 import tempfile
 import certifi
@@ -123,6 +124,28 @@ def pick(row, *keys, default=None):
     return default
 
 
+def loads_lenient(text):
+    """Parse JSON even when the server prepends PHP notices / HTML before the body.
+
+    ELI & NBL intermittently echo a mysqli 'Runtime Notice' <div> ahead of the
+    real JSON (HTTP 200, content-type application/json). Scan for the first '{'
+    or '[' that decodes to a complete JSON value and return it.
+    """
+    try:
+        return json.loads(text)
+    except ValueError:
+        pass
+    dec = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch in "{[":
+            try:
+                obj, _ = dec.raw_decode(text, i)
+                return obj
+            except ValueError:
+                continue
+    raise ValueError("no JSON value found in response")
+
+
 def records_of(payload):
     """data may be a bare list, or {records:[...], summary:{...}}."""
     data = payload.get("data")
@@ -220,7 +243,7 @@ def fetch_endpoint(product, key, from_date, to_date):
         else:
             resp = requests.post(url, data=body, timeout=TIMEOUT, verify=CA_BUNDLE, headers=HEADERS)
         resp.raise_for_status()
-        payload = resp.json()
+        payload = loads_lenient(resp.text)
         rows = [NORMALIZERS[key](r) for r in records_of(payload)]
         return key, rows, None
     except Exception as exc:                # noqa: BLE001 - report, don't crash
