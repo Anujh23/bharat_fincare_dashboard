@@ -348,24 +348,31 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
     _, bt, bt_err = fetch_endpoint(prod, "branch_target", ms_iso, to_iso)
     _, st, st_err = fetch_endpoint(prod, "sanction_target", ms_iso, to_iso)
     _, sc, sc_err = fetch_endpoint(prod, "sanction", ms_iso, to_iso)
+    _, bf, bf_err = fetch_endpoint(prod, "branch_fresh", ms_iso, to_iso)
     _, cm, cm_err = fetch_endpoint(prod, "collection", ms_iso, to_iso)
     bt = bt or []
     st = st or []
     sc = sc or []
+    bf = bf or []
     cm = cm or []
 
     # Target & achievement come from sanctionTargetVsAchievementApi (officer roll-up).
     # branch_target is kept only for the per-branch leaderboard below.
     target = sum(r["target"] for r in st)
     achievement = sum(r["achievement"] for r in st)
-    loans = int(sum(r["total_cases"] for r in sc))
     remaining = max(target - achievement, 0)
 
-    fresh_cases = int(sum(r["fresh_cases"] for r in sc))
-    fresh_amount = sum(r["fresh_amount"] for r in sc)
-    repeat_cases = int(sum(r["repeat_cases"] for r in sc))
-    repeat_amount = sum(r["repeat_amount"] for r in sc)
-    disbursed = sum(r["total_amount"] for r in sc)
+    # Fresh/repeat comes from the branch-wise API, not the officer-wise one:
+    # on ELI/NBL sanctionDashboardApi drops loans (every officer under-reports
+    # vs collection/target), while freshVsRepeatedBranchApi tallies with the
+    # achievement figure. On CP/LR the two agree, so this is safe everywhere.
+    src = bf if bf else sc
+    loans = int(sum(r["total_cases"] for r in src))
+    fresh_cases = int(sum(r["fresh_cases"] for r in src))
+    fresh_amount = sum(r["fresh_amount"] for r in src)
+    repeat_cases = int(sum(r["repeat_cases"] for r in src))
+    repeat_amount = sum(r["repeat_amount"] for r in src)
+    disbursed = sum(r["total_amount"] for r in src)
 
     ranked = sorted(bt, key=lambda r: r["achievement"], reverse=True)
     top_branches = [{"branch": r["branch"], "amount": r["achievement"],
@@ -398,7 +405,7 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
         "top_branches": top_branches,
         "top_cms": top_cms,
         "daily": daily_series,
-        "errors": {k: v for k, v in (("sanction_target", st_err), ("branch_target", bt_err), ("sanction", sc_err), ("collection", cm_err)) if v},
+        "errors": {k: v for k, v in (("sanction_target", st_err), ("branch_target", bt_err), ("sanction", sc_err), ("branch_fresh", bf_err), ("collection", cm_err)) if v},
     }
 
 
