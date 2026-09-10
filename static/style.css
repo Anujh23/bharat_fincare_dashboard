@@ -79,6 +79,16 @@ body{
 .prog .sub b{color:var(--head)}
 .prog .loans{margin-top:auto; padding-top:10px; text-align:right; color:var(--good); font-weight:700; font-size:14px}
 
+/* ---------- fresh / repeat / total split ---------- */
+.prog .split{margin-top:auto; padding-top:12px; display:flex; gap:10px}
+.prog .sp{flex:1; min-width:0; padding:8px 10px; border-radius:14px; background:var(--bg);
+  box-shadow:inset 3px 3px 7px var(--dark), inset -3px -3px 7px var(--lite)}
+.prog .sp-k{display:block; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--muted)}
+.prog .sp-c{display:block; font-size:17px; font-weight:800; line-height:1.15; color:var(--head); margin-top:2px}
+.prog .sp-a{display:block; font-size:11px; font-weight:700; color:var(--ink); white-space:nowrap}
+.prog .sp-t{border-left:4px solid var(--pc)}
+.prog .sp-t .sp-c{color:var(--pc)}
+
 /* ---------- company total ---------- */
 .total{display:flex; flex-direction:column; justify-content:center}
 .total .big2{font-size:14px; margin-top:12px; color:var(--ink)}

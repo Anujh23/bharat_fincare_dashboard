@@ -361,6 +361,12 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
     loans = int(sum(r["total_cases"] for r in sc))
     remaining = max(target - achievement, 0)
 
+    fresh_cases = int(sum(r["fresh_cases"] for r in sc))
+    fresh_amount = sum(r["fresh_amount"] for r in sc)
+    repeat_cases = int(sum(r["repeat_cases"] for r in sc))
+    repeat_amount = sum(r["repeat_amount"] for r in sc)
+    disbursed = sum(r["total_amount"] for r in sc)
+
     ranked = sorted(bt, key=lambda r: r["achievement"], reverse=True)
     top_branches = [{"branch": r["branch"], "amount": r["achievement"],
                      "target": r["target"], "pct": r["ach_pct"]} for r in ranked[:6]]
@@ -385,6 +391,9 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
         "target": target, "achievement": achievement,
         "pct": (achievement / target * 100) if target else 0,
         "loans": loans, "remaining": remaining,
+        "fresh_cases": fresh_cases, "fresh_amount": fresh_amount,
+        "repeat_cases": repeat_cases, "repeat_amount": repeat_amount,
+        "disbursed": disbursed,
         "need_per_day": (remaining / days_left) if days_left else 0,
         "top_branches": top_branches,
         "top_cms": top_cms,

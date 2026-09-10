@@ -93,7 +93,12 @@ function renderProgress(el, p, i, daysLeft){
        background:linear-gradient(90deg,${ACCENT_LITE[i]},${ACCENT[i]})"></i></div>
     <div class="sub">${pct.toFixed(2)}% of <b>${inrC(p.target)}</b> (${inrC(p.achievement)}) ·
        Need <b>${inrC(p.need_per_day)}</b>/day (${daysLeft}d left)</div>
-    <div class="loans">${(p.loans||0).toLocaleString("en-IN")} loans</div>`;
+    ${p.fresh_cases==null ? `<div class="loans">${(p.loans||0).toLocaleString("en-IN")} loans</div>` : `
+    <div class="split">
+      <div class="sp"><span class="sp-k">Fresh</span><span class="sp-c">${(p.fresh_cases||0).toLocaleString("en-IN")}</span><span class="sp-a">${inrC(p.fresh_amount)}</span></div>
+      <div class="sp"><span class="sp-k">Repeat</span><span class="sp-c">${(p.repeat_cases||0).toLocaleString("en-IN")}</span><span class="sp-a">${inrC(p.repeat_amount)}</span></div>
+      <div class="sp sp-t"><span class="sp-k">Total</span><span class="sp-c">${(p.loans||0).toLocaleString("en-IN")}</span><span class="sp-a">${inrC(p.disbursed)}</span></div>
+    </div>`}`;
 }
 
 function renderTotal(c){
