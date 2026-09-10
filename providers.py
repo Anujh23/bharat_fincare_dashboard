@@ -334,25 +334,35 @@ PAIRS = {
 }
 
 
-def daily_total(pkey, day_iso):
-    """Disbursed amount for a single day (sum of sanction rows' grand total)."""
+def daily_stats(pkey, day_iso):
+    """Single-day sanction roll-up (amount + fresh/repeat split).
+
+    Day-wise queries are the only exact source on ELI/NBL: their officer API
+    collapses a customer's multiple loans into one row over a multi-day range
+    (counts borrowers, not loans), but single-day queries are complete.
+    """
     prod = PRODUCT_MAP[pkey]
     _, rows, err = fetch_endpoint(prod, "sanction", day_iso, day_iso)
-    if err or not rows:
-        return 0.0
-    return sum(r["total_amount"] for r in rows)
+    rows = rows or []
+    return {
+        "amount":        sum(r["total_amount"] for r in rows),
+        "cases":         sum(r["total_cases"] for r in rows),
+        "fresh_cases":   sum(r["fresh_cases"] for r in rows),
+        "fresh_amount":  sum(r["fresh_amount"] for r in rows),
+        "repeat_cases":  sum(r["repeat_cases"] for r in rows),
+        "repeat_amount": sum(r["repeat_amount"] for r in rows),
+        "error":         err,
+    }
 
 
 def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
     prod = PRODUCT_MAP[pkey]
     _, bt, bt_err = fetch_endpoint(prod, "branch_target", ms_iso, to_iso)
     _, st, st_err = fetch_endpoint(prod, "sanction_target", ms_iso, to_iso)
-    _, sc, sc_err = fetch_endpoint(prod, "sanction", ms_iso, to_iso)
     _, bf, bf_err = fetch_endpoint(prod, "branch_fresh", ms_iso, to_iso)
     _, cm, cm_err = fetch_endpoint(prod, "collection", ms_iso, to_iso)
     bt = bt or []
     st = st or []
-    sc = sc or []
     bf = bf or []
     cm = cm or []
 
@@ -361,18 +371,6 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
     target = sum(r["target"] for r in st)
     achievement = sum(r["achievement"] for r in st)
     remaining = max(target - achievement, 0)
-
-    # Fresh/repeat comes from the branch-wise API, not the officer-wise one:
-    # on ELI/NBL sanctionDashboardApi drops loans (every officer under-reports
-    # vs collection/target), while freshVsRepeatedBranchApi tallies with the
-    # achievement figure. On CP/LR the two agree, so this is safe everywhere.
-    src = bf if bf else sc
-    loans = int(sum(r["total_cases"] for r in src))
-    fresh_cases = int(sum(r["fresh_cases"] for r in src))
-    fresh_amount = sum(r["fresh_amount"] for r in src)
-    repeat_cases = int(sum(r["repeat_cases"] for r in src))
-    repeat_amount = sum(r["repeat_amount"] for r in src)
-    disbursed = sum(r["total_amount"] for r in src)
 
     ranked = sorted(bt, key=lambda r: r["achievement"], reverse=True)
     top_branches = [{"branch": r["branch"], "amount": r["achievement"],
@@ -384,14 +382,35 @@ def _product_block(pkey, ms_iso, to_iso, days, days_iso, days_left):
                 "cases": int(r["total_cases"]), "collected": r["collected_amount"]}
                for r in cm_ranked[:3]]
 
-    # per-day disbursement series
+    # per-day sanction roll-ups: feed the chart AND the fresh/repeat split.
+    # Summing day-wise is exact (matches collection to the case); a range query
+    # on ELI/NBL undercounts because their API dedupes customers across days.
     daily = {}
     with ThreadPoolExecutor(max_workers=8) as pool:
-        futs = {pool.submit(daily_total, pkey, di): i for i, di in enumerate(days_iso)}
+        futs = {pool.submit(daily_stats, pkey, di): i for i, di in enumerate(days_iso)}
         for f in futs:
             daily[futs[f]] = f.result()
-    daily_series = [{"day": days[i], "date": days_iso[i], "amount": daily.get(i, 0.0)}
+    stats = [daily[i] for i in range(len(days_iso))]
+    daily_series = [{"day": days[i], "date": days_iso[i], "amount": stats[i]["amount"]}
                     for i in range(len(days_iso))]
+
+    failed_days = sum(1 for s in stats if s["error"])
+    if failed_days == len(stats) and bf:
+        # every daily query failed -> fall back to the branch-wise range (97-99% complete)
+        loans = int(sum(r["total_cases"] for r in bf))
+        fresh_cases = int(sum(r["fresh_cases"] for r in bf))
+        fresh_amount = sum(r["fresh_amount"] for r in bf)
+        repeat_cases = int(sum(r["repeat_cases"] for r in bf))
+        repeat_amount = sum(r["repeat_amount"] for r in bf)
+        disbursed = sum(r["total_amount"] for r in bf)
+    else:
+        loans = int(sum(s["cases"] for s in stats))
+        fresh_cases = int(sum(s["fresh_cases"] for s in stats))
+        fresh_amount = sum(s["fresh_amount"] for s in stats)
+        repeat_cases = int(sum(s["repeat_cases"] for s in stats))
+        repeat_amount = sum(s["repeat_amount"] for s in stats)
+        disbursed = sum(s["amount"] for s in stats)
+    sc_err = f"{failed_days}/{len(stats)} daily sanction queries failed" if failed_days else None
 
     return {
         "key": pkey, "name": prod["name"],
