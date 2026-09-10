@@ -16,6 +16,21 @@ from providers import build_board, PAIRS
 app = Flask(__name__)
 
 
+@app.context_processor
+def _static_versioning():
+    """static_url('app.js') -> /static/app.js?v=<mtime> so browsers re-fetch
+    changed assets after a deploy instead of serving a stale cached copy."""
+    def static_url(filename):
+        from flask import url_for
+        path = os.path.join(app.static_folder, filename)
+        try:
+            v = int(os.path.getmtime(path))
+        except OSError:
+            v = 0
+        return url_for("static", filename=filename, v=v)
+    return {"static_url": static_url}
+
+
 @app.route("/")
 def index():
     return render_template("dashboard.html")
